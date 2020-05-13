@@ -51,6 +51,7 @@ class ComputeGraph:
     return "(consistent: " + str(self.consistent) + ", nodes: [" + ", ".join([str(n) for n in self.nodes]) + "], connections: [" + ", ".join([str(n) for n in self.connections]) + "])"
 
 
+
 def load(filepath : str):
   with open(filepath) as f:
     cfg = json.load(f)
