@@ -1,0 +1,10 @@
+{
+  "nodes": [
+    {"name": "node1" , "ip" : "127.0.0.1"}, 
+    {"name": "node2" , "ip" : "127.0.0.1"}
+  ],
+  "connections": [
+    {"name": "non_block", "src": "node1", "dest": "node2", "type": "async"},
+    {"name": "block", "src": "node1", "dest": "node2", "type": "await"}
+  ] 
+}
