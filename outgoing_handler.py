@@ -1,5 +1,5 @@
 import requests
-import pickle
+import serialization
 
 
 class OutgoingHandler:
@@ -8,7 +8,7 @@ class OutgoingHandler:
 
     def send(self, data):
         try:
-            res = requests.post(self._url, pickle.dumps(data))
+            res = requests.post(self._url, serialization.serialize(data))
         except requests.exceptions.ConnectionError:
             return False, None
-        return res.ok, pickle.loads(res.content)
+        return res.ok, serialization.deserialize(res.content)

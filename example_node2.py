@@ -12,7 +12,6 @@ cio = compute_io.ComputeIO()
 def async_callback(data):
     print(data)
     data["goodbye"] = "world"
-    return data
 
 
 def await_callback(data):

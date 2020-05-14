@@ -1,6 +1,6 @@
 import threading
 import requests
-import pickle
+import serialization
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
@@ -24,10 +24,10 @@ class IncomingHandler:
             def do_POST(self):
                 content_length = int(self.headers['Content-Length'])
                 post_data = self.rfile.read(content_length)
-                callback_res = callback(pickle.loads(post_data))
+                callback_res = callback(serialization.deserialize(post_data))
                 self._set_response()
                 if callback_res is not None:
-                    self.wfile.write(pickle.dumps(callback_res))
+                    self.wfile.write(serialization.serialize(callback_res))
 
         server_address = (address, port)
         self.address = 'http://{}:{}'.format(address, port)
