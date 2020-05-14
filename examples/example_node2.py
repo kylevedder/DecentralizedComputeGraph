@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
+import sys
+sys.path.append("..")
 
-import signal
-import compute_graph
 import compute_io
+import compute_graph
 import time
+import signal
+
 
 cg = compute_graph.load("compute_graph.json")
 cio = compute_io.ComputeIO()
 
 
-stored_info = []
+stored_info = {}
 
 
 def update_callback(data):
     global stored_info
     if data is not None:
-      stored_info += data
+        stored_info.update(data)
 
 
 def compute_callback(data):
