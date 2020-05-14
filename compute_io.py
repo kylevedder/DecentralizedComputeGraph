@@ -1,66 +1,57 @@
 import compute_graph
-import requests 
-import pickle
+import outgoing_handler
+import incoming_handler
 
 class ComputeIO:
-  def __init__(self):
-    self._await_callbacks = {}
-    self._async_callbacks = {}
-    self._await_outputs = {}
-    self._async_outputs = {}
+    def __init__(self):
+        self._callbacks = {}
 
-  def set_async_callback(self, name: str, callback):
-    self._async_callbacks[name] = callback
+        self._outgoing = {}
+        self._incoming = {}
 
-  def set_await_callback(self, name: str, callback):
-    self._await_callbacks[name] = callback
+    def set_callback(self, name: str, callback):
+        self._callbacks[name] = callback
 
-  def _validate_callbacks(self, node_name : str, cg : compute_graph.ComputeGraph):
-    # Validate all graph callbacks set.
-    for c in cg.connections:
-      if c.dest_name == node_name:
-        if c.type == compute_graph.ConnectionType.AWAIT:
-          cb = self._await_callbacks.get(c.name, None)
-          if cb is None:
-            print("Missing await callback for compute graph connection", c.name)
-            return False
-          if c.dest_name != node_name:
-            print("Callback set for connection", c.name, " but", node_name, "is not the destination")
-            return False
-        else:
-          cb = self._async_callbacks.get(c.name, None)
-          if cb is None:
-            print("Missing async callback for compute graph connection", c.name)
-            return False
-          if c.dest_name != node_name:
-            print("Callback set for connection", c.name, " but", node_name, "is not the destination")
-            return False
-    return True
+    def _validate_callbacks(self, node_name: str, cg: compute_graph.ComputeGraph):
+        # Validate all graph callbacks set.
+        for c in cg.connections:
+            if c.dest_name == node_name:
+                cb = self._callbacks.get(c.name, None)
+                if cb is None:
+                    print(
+                        "Missing callback for compute graph connection", c.name)
+                    return False
+                if c.dest_name != node_name:
+                    print("Callback set for connection", c.name,
+                          " but", node_name, "is not the destination")
+                    return False
+        return True
 
-  def setup(self, node_name : str, cg : compute_graph.ComputeGraph):
-    if not cg.consistent:
-      print("ComputeGraph not consistent")
-      return
-    if not self._validate_callbacks(node_name, cg):
-      return
+    def _setup_outgoing(self, node_name: str, cg: compute_graph.ComputeGraph):
+        for c in cg.connections:
+            if c.src_name == node_name:
+              self._outgoing[c.name] = outgoing_handler.OutgoingHandler(c.dest.ip, c.port)
+                
+    def _setup_incoming(self, node_name: str, cg: compute_graph.ComputeGraph):
+        for c in cg.connections:
+            if c.dest_name == node_name:
+              self._incoming[c.name] = incoming_handler.IncomingHandler(c.dest.ip, c.port, self._callbacks[c.name])
+              self._incoming[c.name].start()
 
-    # Setup lambdas for all outgoing connections
-    for c in cg.connections:
-      if c.src_name == node_name:
-        if c.type == compute_graph.ConnectionType.AWAIT:
-          self._await_outputs[c.name] = "http://{}:{}".format(c.dest.ip, c.port)
-        else:
-          self._async_outputs[c.name] = "http://{}:{}".format(c.dest.ip, c.port)
+    def setup(self, node_name: str, cg: compute_graph.ComputeGraph):
+        if not cg.consistent:
+            print("ComputeGraph not consistent")
+            return
+        if not self._validate_callbacks(node_name, cg):
+            return
 
+        self._setup_outgoing(node_name, cg)
+        self._setup_incoming(node_name, cg)
 
-  def send_await(self, name: str, data):
-    print(self._await_outputs)
-    url = self._await_outputs[name]
-    datas = pickle.dumps(data)
-    try:
-      res = requests.post(url=url, data=datas)
-    except requests.exceptions.ConnectionError:
-      return False, None
-    print(res)
-    
+    def shutdown(self):
+      for ih in self._incoming.values():
+        ih.stop()
+
+    def send(self, connection_name: str, data):
+      return self._outgoing[connection_name].send(data)
 
