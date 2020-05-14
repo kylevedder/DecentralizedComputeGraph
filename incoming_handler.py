@@ -18,7 +18,7 @@ class IncomingHandler:
 
             def _set_response(self):
                 self.send_response(200)
-                self.send_header('Content-type', 'text/html')
+                self.send_header('Content-type', 'application/x-binary')
                 self.end_headers()
 
             def do_POST(self):
@@ -29,6 +29,9 @@ class IncomingHandler:
                 if callback_res is not None:
                     self.wfile.write(serialization.serialize(callback_res))
 
+            def log_message(self, format, *args):
+                pass
+
         server_address = (address, port)
         self.address = 'http://{}:{}'.format(address, port)
         self.httpd = StoppableHttpServer(server_address, Handler)
@@ -36,7 +39,6 @@ class IncomingHandler:
 
     def _run_server(self):
         try:
-            print('Serve forever')
             self.httpd.serve_forever()
         except KeyboardInterrupt:
             pass

@@ -9,19 +9,21 @@ cg = compute_graph.load("compute_graph.json")
 cio = compute_io.ComputeIO()
 
 
-def async_callback(data):
-    print(data)
-    data["goodbye"] = "world"
+stored_info = []
 
 
-def await_callback(data):
-    print(data)
-    data["hello"] = "world"
-    return data
+def update_callback(data):
+    global stored_info
+    if data is not None:
+      stored_info += data
 
 
-cio.set_callback("non_block", async_callback)
-cio.set_callback("block", await_callback)
+def compute_callback(data):
+    return stored_info
+
+
+cio.set_callback("update", update_callback)
+cio.set_callback("compute", compute_callback)
 cio.setup("node2", cg)
 
 is_running = True
@@ -35,6 +37,6 @@ def handler(signum, frame):
 signal.signal(signal.SIGINT, handler)
 
 while is_running:
-  time.sleep(0.1)
+    time.sleep(0.1)
 
 cio.shutdown()

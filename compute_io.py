@@ -52,6 +52,6 @@ class ComputeIO:
       for ih in self._incoming.values():
         ih.stop()
 
-    def send(self, connection_name: str, data):
+    def send(self, connection_name: str, data=None):
       return self._outgoing[connection_name].send(data)
 
